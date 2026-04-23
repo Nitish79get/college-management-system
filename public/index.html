@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Management System | Auth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+
+        .auth-container { 
+            background: rgba(255, 255, 255, 0.95); width: 420px; padding: 40px; 
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+            backdrop-filter: blur(10px); position: relative; min-height: 520px;
+        }
+
+        .toggle-role { 
+            display: flex; justify-content: center; margin-bottom: 25px; 
+            background: #f0f2f5; border-radius: 30px; padding: 5px;
+        }
+
+        .toggle-btn { 
+            flex: 1; padding: 10px 5px; border: none; background: transparent; 
+            cursor: pointer; font-weight: 600; font-size: 13px; border-radius: 25px;
+            transition: 0.3s; color: #65676b;
+        }
+
+        .toggle-btn.active { background: #764ba2; color: white; }
+
+        .form-section { transition: all 0.4s ease; }
+        .hidden-form { display: none; opacity: 0; transform: translateY(20px); }
+        .active-form { display: block; opacity: 1; transform: translateY(0); }
+
+        h2 { text-align: center; margin-bottom: 20px; color: #1c1e21; font-weight: 600; }
+
+        input, select { 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1.5px solid #eee; 
+            border-radius: 10px; background: #f9f9f9; font-size: 14px; transition: 0.3s;
+        }
+
+        input:focus, select:focus { 
+            outline: none; border-color: #764ba2; background: #fff;
+            box-shadow: 0 0 8px rgba(118, 75, 162, 0.15);
+        }
+
+        button.submit-btn { 
+            width: 100%; padding: 14px; background: linear-gradient(to right, #667eea, #764ba2); 
+            color: white; border: none; border-radius: 10px; font-size: 16px; 
+            font-weight: 600; cursor: pointer; margin-top: 15px; transition: 0.3s; 
+        }
+
+        button.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3); }
+        button.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        .switch-auth { text-align: center; margin-top: 20px; font-size: 14px; cursor: pointer; color: #764ba2; font-weight: 500; }
+        .switch-auth:hover { text-decoration: underline; }
+
+        .message { text-align: center; margin-top: 15px; font-size: 13px; font-weight: 500; padding: 10px; border-radius: 8px; display: none; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader {
+            width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite;
+            display: inline-block; margin-right: 10px; vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="toggle-role" id="roleToggleArea">
+        <button class="toggle-btn active" id="btnStudent" onclick="setRole('student')">Student</button>
+        <button class="toggle-btn" id="btnAdmin" onclick="setRole('admin')">Admin</button>
+        <button class="toggle-btn" id="btnSuper" onclick="setRole('super_admin')">Super Admin</button>
+    </div>
+
+    <div id="loginForm" class="form-section active-form">
+        <h2 id="loginTitle">Student Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email Address" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <p class="switch-auth" style="text-align: right; margin-top: -5px; font-size: 12px;" onclick="toggleAuthMode('forgot')">Forgot Password?</p>
+        <button class="submit-btn" onclick="loginUser()">Login</button>
+        <p id="loginMessage" class="message"></p>
+        <p class="switch-auth" id="switchToSignupBtn" onclick="toggleAuthMode('signup')">Don't have an account? <b>Sign Up</b></p>
+    </div>
+
+    <div id="signupForm" class="form-section hidden-form">
+        <h2 id="signupTitle">Student Sign Up</h2>
+        <input type="text" id="signupName" placeholder="Full Name" required>
+        <input type="email" id="signupEmail" placeholder="Email Address" required>
+        
+        <div id="studentFields">
+            <input type="text" id="signupEnrollment" placeholder="Enrollment Number">
+        </div>
+        
+        <div id="adminFields" style="display: none;">
+            <select id="signupDepartment">
+                <option value="">Assign Department...</option>
+                <option value="IT/Network">IT / WiFi Network</option>
+                <option value="Hostel">Hostel Management</option>
+                <option value="Academics">Academics</option>
+                <option value="Maintenance">Campus Maintenance</option>
+            </select>
+        </div>
+
+        <input type="password" id="signupPassword" placeholder="Create Password" required>
+        <button class="submit-btn" onclick="registerUser()">Create Account</button>
+        <p id="signupMessage" class="message"></p>
+        <p class="switch-auth" onclick="toggleAuthMode('login')">Already have an account? <b>Login</b></p>
+    </div>
+
+    <div id="forgotForm" class="form-section hidden-form">
+        <h2 style="margin-bottom: 10px;">Reset Password</h2>
+        <p style="text-align: center; color: #65676b; font-size: 13px; margin-bottom: 20px;">We'll send an OTP to your email.</p>
+        
+        <div id="otpStep1"> 
+            <input type="email" id="forgotEmail" placeholder="Registered Email Address">
+            <button class="submit-btn" onclick="sendOTP()">Send Reset OTP</button>
+        </div>
+
+        <div id="otpStep2" style="display: none;">
+            <input type="text" id="otpInput" placeholder="6-Digit OTP">
+            <input type="password" id="newPasswordInput" placeholder="New Password">
+            <button class="submit-btn" onclick="resetPassword()">Update Password</button>
+        </div>
+
+        <p id="forgotMessage" class="message"></p> 
+        <p class="switch-auth" onclick="toggleAuthMode('login')"><i class="fas fa-arrow-left"></i> Back to Login</p>
+    </div>
+</div>
+
+<script>
+    let currentRole = 'student';
+    const API_URL = '/api/auth';
+
+    function setRole(role) {
+        currentRole = role;
+        
+        // Update Buttons
+        document.getElementById('btnStudent').classList.toggle('active', role === 'student');
+        document.getElementById('btnAdmin').classList.toggle('active', role === 'admin');
+        document.getElementById('btnSuper').classList.toggle('active', role === 'super_admin');
+        
+        // Update Titles
+        let titleText = 'Student';
+        if(role === 'admin') titleText = 'Department Admin';
+        if(role === 'super_admin') titleText = 'Super Admin';
+        
+        document.getElementById('loginTitle').innerText = titleText + ' Login';
+        document.getElementById('signupTitle').innerText = titleText + ' Sign Up';
+        
+        // Show/Hide specific fields
+        document.getElementById('studentFields').style.display = role === 'student' ? 'block' : 'none';
+        document.getElementById('adminFields').style.display = role === 'admin' ? 'block' : 'none';
+
+        // Super Admins shouldn't be allowed to sign up via the public portal (Security feature)
+        if(role === 'super_admin') {
+            document.getElementById('switchToSignupBtn').style.display = 'none';
+            if(!document.getElementById('signupForm').classList.contains('hidden-form')){
+                toggleAuthMode('login'); 
+            }
+        } else {
+            document.getElementById('switchToSignupBtn').style.display = 'block';
+        }
+        
+        clearMessages();
+    }
+
+    function toggleAuthMode(mode) {
+        const login = document.getElementById('loginForm');
+        const signup = document.getElementById('signupForm');
+        const forgot = document.getElementById('forgotForm');
+        const roleArea = document.getElementById('roleToggleArea');
+
+        [login, signup, forgot].forEach(f => {
+            f.classList.add('hidden-form');
+            f.classList.remove('active-form');
+        });
+
+        if (mode === 'login') {
+            login.classList.replace('hidden-form', 'active-form');
+            roleArea.style.display = 'flex';
+        } else if (mode === 'signup') {
+            signup.classList.replace('hidden-form', 'active-form');
+            roleArea.style.display = 'flex';
+        } else if (mode === 'forgot') {
+            forgot.classList.replace('hidden-form', 'active-form');
+            roleArea.style.display = 'none';
+        }
+        clearMessages();
+    }
+
+    function clearMessages() {
+        ['loginMessage', 'signupMessage', 'forgotMessage'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) { el.style.display = 'none'; el.style.background = 'transparent'; }
+        });
+    }
+
+    function showMessage(elementId, text, color) {
+        const el = document.getElementById(elementId);
+        el.innerText = text;
+        el.style.color = color === 'red' ? '#d32f2f' : '#2e7d32';
+        el.style.background = color === 'red' ? '#ffebee' : '#e8f5e9';
+        el.style.display = 'block';
+    }
+
+    // AUTH LOGIC
+    async function registerUser() {
+        const submitBtn = document.querySelector('#signupForm .submit-btn');
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+
+        if (!name || !email || !password) return showMessage('signupMessage', 'Fields required.', 'red');
+
+        try {
+            submitBtn.innerHTML = `<div class="loader"></div> Processing...`;
+            submitBtn.disabled = true;
+
+            const response = await fetch(`${API_URL}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    role: currentRole, name, email, password, 
+                    enrollmentNumber: document.getElementById('signupEnrollment').value,
+                    department: document.getElementById('signupDepartment').value 
+                })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showMessage('signupMessage', 'Account created! Redirecting...', 'green');
+                setTimeout(() => toggleAuthMode('login'), 2000);
+            } else {
+                showMessage('signupMessage', data.error, 'red');
+            }
+        } catch (error) {
+            showMessage('signupMessage', 'Connection error.', 'red');
+        } finally {
+            submitBtn.innerHTML = "Create Account";
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function loginUser() {
+        const submitBtn = document.querySelector('#loginForm .submit-btn');
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            submitBtn.innerHTML = `<div class="loader"></div> Authenticating...`;
+            submitBtn.disabled = true;
+
+            const response = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, role: currentRole })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                // Route based on role
+                if(data.user.role === 'admin' || data.user.role === 'super_admin') {
+                    window.location.href = 'admin_dashboard.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            } else {
+                showMessage('loginMessage', data.error, 'red');
+            }
+        } catch (error) {
+            showMessage('loginMessage', 'Server unreachable.', 'red');
+        } finally {
+            submitBtn.innerHTML = "Login";
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function sendOTP() {
+        const email = document.getElementById('forgotEmail').value;
+        const submitBtn = document.querySelector('#otpStep1 .submit-btn');
+        
+        if (!email) return showMessage('forgotMessage', 'Email is required.', 'red');
+
+        try {
+            submitBtn.innerHTML = `<div class="loader"></div> Sending OTP...`;
+            submitBtn.disabled = true;
+
+            const response = await fetch(`${API_URL}/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('otpStep1').style.display = 'none';
+                document.getElementById('otpStep2').style.display = 'block';
+                showMessage('forgotMessage', data.message, 'green');
+            } else {
+                showMessage('forgotMessage', data.error, 'red');
+            }
+        } catch (error) {
+            showMessage('forgotMessage', 'Failed to send OTP.', 'red');
+        } finally {
+            submitBtn.innerHTML = "Send Reset OTP";
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function resetPassword() {
+        const submitBtn = document.querySelector('#otpStep2 .submit-btn');
+        const email = document.getElementById('forgotEmail').value;
+        const otp = document.getElementById('otpInput').value;
+        const newPassword = document.getElementById('newPasswordInput').value;
+
+        try {
+            submitBtn.innerHTML = `<div class="loader"></div> Updating...`;
+            submitBtn.disabled = true;
+
+            const response = await fetch(`${API_URL}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, newPassword })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert("Success! Your password has been updated.");
+                location.reload();
+            } else {
+                showMessage('forgotMessage', data.error, 'red');
+            }
+        } catch (error) {
+            showMessage('forgotMessage', 'Error resetting password.', 'red');
+        } finally {
+            submitBtn.innerHTML = "Update Password";
+            submitBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -219,16 +219,15 @@ app.get('/api/complaints/student', verifyToken, async (req, res) => {
 
 
 // 3. ADMIN: GET COMPLAINTS (Role-Based Access Control)
+// 3. ADMIN: GET COMPLAINTS (Role-Based Access Control)
 app.get('/api/complaints', verifyToken, async (req, res) => {
     try {
-        // Prevent students from accessing all complaints
         if (req.user.role === 'student') return res.status(403).json({ error: 'Access denied.' });
 
         let filter = {};
         
-        // RBAC Logic: Department Admin only sees their own department.
-        // Super Admin sees everything (filter remains empty).
-        if (req.user.role === 'admin') {
+        // Smart Logic: If department is "All", the filter stays empty so they see everything!
+        if (req.user.role === 'admin' && req.user.department !== 'All') {
             filter.department = req.user.department;
         }
 
